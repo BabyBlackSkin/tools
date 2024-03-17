@@ -1,0 +1,9 @@
+*::-webkit-scrollbar-button {
+    display: none;
+}
+
+.tab-contain {
+    width: 100%;
+    padding: 10px;
+    overflow: auto;
+}
