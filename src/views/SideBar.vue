@@ -40,7 +40,7 @@ export default {
         },
         {
           name: 'sshList',
-          title: '数据库SSH',
+          title: 'TunnelSSH',
           icon: 'el-icon-connection',
           meta: {
             name: 'sshManager'

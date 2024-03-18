@@ -12,8 +12,14 @@
                      :table-prop="tableProp">
         <template v-slot:expand="scope">
           <el-form label-position="left" inline class="demo-table-expand">
-            <el-form-item label="服务端口号">
-              <span>{{ scope.row.service_port }}</span>
+            <el-form-item label="本地端口号">
+              <span>{{ scope.row.src_port }}</span>
+            </el-form-item>
+            <el-form-item label="目标服务地址">
+              <span>{{ scope.row.dst_host }}</span>
+            </el-form-item>
+            <el-form-item label="目标服务端口号">
+              <span>{{ scope.row.dst_port }}</span>
             </el-form-item>
             <el-form-item label="跳板机地址">
               <span>{{ scope.row.ssh_host }}</span>
@@ -21,20 +27,11 @@
             <el-form-item label="跳板机端口号">
               <span>{{ scope.row.ssh_user_name }}</span>
             </el-form-item>
-            <el-form-item label="数据库地址">
-              <span>{{ scope.row.db_host }}</span>
-            </el-form-item>
-            <el-form-item label="数据库端口号">
-              <span>{{ scope.row.db_port }}</span>
-            </el-form-item>
-            <el-form-item label="数据库用户名">
-              <span>{{ scope.row.db_user_name }}</span>
-            </el-form-item>
           </el-form>
         </template>
         <template v-slot:statusSlot="scope">
           <el-tag type="info" v-if="!scope.row.status || scope.row.status === 0">断开</el-tag>
-          <el-tag type="success" v-if="scope.row.status === 1">Port:{{ scope.row.service_port }}</el-tag>
+          <el-tag type="success" v-if="scope.row.status === 1">Port:{{ scope.row.src_port }}</el-tag>
           <el-tag type="danger" v-if="scope.row.status === 2">连接失败</el-tag>
         </template>
       </quickly-table>
@@ -107,31 +104,6 @@ export default {
         pageNum: 1
       },
       tableData: [],
-      addDialogVisible: false,
-      addDialogForm: {},
-      addDialogFormItem: [
-        {prop: 'name', label: '名称'},
-        {prop: 'ssh_host', label: '跳板机IP'},
-        {
-          prop: 'ssh_port', label: '跳板机端口',
-          rules: [
-            {required: true, message: '跳板机端口号', trigger: 'blur'},
-            {min: 0, max: 65535, type: 'number', message: '长度在 1 到 20 个字符', trigger: 'blur'},
-            {
-              validator: (rule, value, callback) => {
-                this.isPort(rule, value, callback);
-              }, trigger: 'blur'
-            }
-          ]
-        },
-        {prop: 'ssh_user_name', label: '跳板机用户名'},
-        {prop: 'ssh_password', label: '跳板机密码'},
-        {prop: 'db_host', label: '数据库地址'},
-        {prop: 'db_port', label: '数据库端口'},
-        {prop: 'db_user_name', label: '数据库用户名'},
-        {prop: 'db_password', label: '数据库密码'},
-
-      ]
 
     }
   },
@@ -142,7 +114,7 @@ export default {
   },
   methods: {
     search() {
-      let sql = 'SELECT * FROM "main"."db_config"'
+      let sql = 'SELECT * FROM "main"."tunnel_ssh_config"'
       if(this.form.name){
         sql = `${sql} where name LIKE '%${this.form.name}%'`
       }
@@ -172,9 +144,9 @@ export default {
           password: row.ssh_password,
         },
         forwardOptions: {
-          dstAddr: row.db_host,
-          dstPort: row.db_port,
-          srcPort: row.service_port
+          dstAddr: row.dst_host,
+          dstPort: row.dst_port,
+          srcPort: row.src_port
         }
       }
       window.ssh.connect(config).then(res => {
@@ -202,7 +174,7 @@ export default {
       this.$router.push({name: 'addSSH', query: {id: row.id}})
     },
     delById(row, $index) {
-      let sql = `DELETE FROM "main"."db_config" WHERE "id" = ${row.id}`
+      let sql = `DELETE FROM "main"."tunnel_ssh_config" WHERE "id" = ${row.id}`
       window.sqlite.execute(sql).then(res => {
         this.$notify({
           title: res.result ? '删除成功' : '删除失败',

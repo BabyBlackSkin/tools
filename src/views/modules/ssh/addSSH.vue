@@ -3,13 +3,23 @@
     <el-row>
       <el-form ref="form" :model="form" label-width="120px" class="demo-ruleForm" label-position="left">
         <el-row>
+          <h5>转发代理配置</h5>
           <el-col :span="10">
-            <h5>代理配置</h5>
             <el-form-item label="连接名" prop="name" :rules="required">
               <el-input v-model="form.name"></el-input>
             </el-form-item>
-            <el-form-item label="本地端口号" prop="service_port" :rules="portValid">
-              <el-input v-model="form.service_port"></el-input>
+            <el-form-item label="本地端口号" prop="src_port" :rules="portValid">
+              <el-input v-model="form.src_port"></el-input>
+            </el-form-item>
+          </el-col>
+
+          <el-col :offset="2" :span="10">
+            <el-form-item label="目标服务地址" prop="dst_host" :rules="ipValid">
+              <el-input v-model="form.dst_host"></el-input>
+            </el-form-item>
+
+            <el-form-item label="目标服务端口号" prop="dst_port" :rules="portValid">
+              <el-input v-model="form.dst_port"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -35,35 +45,6 @@
           </el-col>
         </el-row>
 
-        <el-row>
-          <h5>目标服务器信息</h5>
-          <el-col :span="10">
-            <el-form-item label="数据库地址" prop="db_host" :rules="ipValid">
-              <el-input v-model="form.db_host"></el-input>
-            </el-form-item>
-
-            <el-form-item label="数据库端口号" prop="db_port" :rules="portValid">
-              <el-input v-model="form.db_port"></el-input>
-            </el-form-item>
-
-            <el-form-item label="数据库用户名">
-              <el-input v-model="form.db_user_name"></el-input>
-            </el-form-item>
-
-            <el-form-item label="数据库密码">
-              <el-input v-model="form.db_password"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="10" :offset="2">
-            <el-form-item label="数据库测试SQL映射列">
-              <el-input v-model="form.test_column"></el-input>
-            </el-form-item>
-
-            <el-form-item label="数据库测试SQL">
-              <el-input v-model="form.test_sql"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
         <el-form-item>
           <el-button @click="cancel">取 消</el-button>
           <el-button type="primary" @click="submit">确 定</el-button>
@@ -81,17 +62,13 @@ export default {
       isUpt: false,
       form: {
         name: '',
-        service_port: 3307,
+        src_port: 3307,
         ssh_host: '',
+        dst_host: '',
+        dst_port: null,
         ssh_port: null,
         ssh_user_name: '',
         ssh_password: '',
-        db_host: '',
-        db_port: null,
-        db_user_name: '',
-        db_password: '',
-        test_column: 'name',
-        test_sql: 'SELECT * FROM mob_base.mall_info',
       },
       required: [
         {required: true, message: '必填', trigger: 'blur'},
@@ -133,7 +110,7 @@ export default {
       }
     },
     getById(id) {
-      let sql = `SELECT * FROM "main"."db_config" WHERE "id" = ${this.$route.query.id}`
+      let sql = `SELECT * FROM "main"."tunnel_ssh_config" WHERE "id" = ${this.$route.query.id}`
       console.log(sql)
       window.sqlite.execute(sql).then(res => {
         if (!res.result) {
@@ -166,21 +143,18 @@ export default {
         }
 
         let sql = `
-          INSERT INTO "main"."db_config"
-          ("name", "service_port", "ssh_host", "ssh_port", "ssh_user_name", "ssh_password", "db_host", "db_port", "db_user_name", "db_password", "test_column", "test_sql")
+          INSERT INTO "main"."tunnel_ssh_config"
+          ("name", "src_port", "dst_host", "dst_port", "ssh_host", "ssh_port", "ssh_user_name", "ssh_password")
           VALUES
           ("${this.form.name}",
-           ${this.form.service_port},
+           ${this.form.src_port},
+            "${this.form.dst_host}",
+            ${this.form.dst_port},
            "${this.form.ssh_host}",
            ${this.form.ssh_port},
            "${this.form.ssh_user_name}",
             "${this.form.ssh_password}",
-            "${this.form.db_host}",
-            ${this.form.db_port},
-            "${this.form.db_user_name}",
-            "${this.form.db_password}",
-            "${this.form.test_column}",
-            "${this.form.test_sql}");
+            )
         `
         window.sqlite.execute(sql).then(res => {
           this.$notify({
