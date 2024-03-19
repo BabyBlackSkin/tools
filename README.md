@@ -61,3 +61,9 @@ npminstall@7.12.0
 win32 x64 10.0.22621
 registry=https://registry.npmmirror.com
 ```
+#### This relative module was not found:
+1：../build/Release/cpufeatures.node in ./node_modules/cpu-features/lib/index.js
+
+```
+npm install buildcheck --ignore-scripts
+```
