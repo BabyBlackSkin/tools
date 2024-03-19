@@ -13,8 +13,6 @@
   "main": "background.js",
   "dependencies": {
     "axios": "^1.6.5",
-    "buildcheck": "^0.0.6",
-    "cpu-features": "^0.0.9",
     "element-ui": "^2.15.14",
     "node-ssh": "^13.1.0",
     "sqlite": "^5.1.1",
