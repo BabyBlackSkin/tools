@@ -153,7 +153,7 @@ export default {
            "${this.form.ssh_host}",
            ${this.form.ssh_port},
            "${this.form.ssh_user_name}",
-            "${this.form.ssh_password}",
+            "${this.form.ssh_password}"
             )
         `
         window.sqlite.execute(sql).then(res => {
@@ -161,7 +161,7 @@ export default {
             title: res.result ? '成功' : '警告',
             message: res.msg,
             type: res.result ? 'success' : 'error',
-            duration: 0
+            duration: 1500
           });
           this.$router.push({name: 'sshList'})
         })

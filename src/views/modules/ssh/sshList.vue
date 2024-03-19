@@ -125,7 +125,7 @@ export default {
             title: '查询失败',
             message: res.msg,
             type: 'error',
-            duration: 0
+            duration: 1500
           });
           return
         }
