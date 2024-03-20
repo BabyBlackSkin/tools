@@ -1,15 +1,22 @@
-const {app} = require("electron");
+const os = require('os');
 const sqlite3 = require("sqlite3")
-const path = require('path')
-const isPackaged = app.isPackaged;
-let DB_PATH;
-if (isPackaged) {
-    DB_PATH = path.resolve('./resources/tools.db')
-} else {
-    // DB_PATH = path.resolve(__dirname, '../../tools.db')
-    DB_PATH = 'C:\\Users\\Administrator\\Documents\\tools.db'
-}
+const fileUtils = require('./FileUtils');
+let configPath = os.homedir() + '/.tools'
+let DB_PATH = configPath + '/tools.db'
 
+const init_sql = `
+CREATE TABLE  if not exists "tunnel_ssh_config" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT NOT NULL,
+  "src_port" TEXT NOT NULL,
+  "dst_host" TEXT,
+  "dst_port" TEXT,
+  "ssh_host" TEXT NOT NULL,
+  "ssh_port" TEXT NOT NULL,
+  "ssh_user_name" TEXT NOT NULL,
+  "ssh_password" TEXT NOT NULL
+);
+`
 
 let db = null;
 /**
@@ -17,11 +24,14 @@ let db = null;
  * @CreationDate 2023-05-10 13:48:41
  */
 const SQLiteInit = () => {
+    fileUtils.mkdir(configPath)
+
     db = new sqlite3.Database(DB_PATH, (err) => {
         if (err) {
             throw err
         }
     });
+    db.run(init_sql)
 }
 
 const execute = (sql) => {

@@ -8,6 +8,10 @@ module.exports = {
             // },
             // 解决图标问题
             customFileProtocol: "./",
+            // Invalid 'main' field in '...\package.json' of 'background.js'.
+            // chainWebpackMainProcess: (config) => {
+            //     config.output.filename('background.js');
+            // },
             builderOptions: {
                 nsis:{
                     oneClick: false, // 是否一键安装,
