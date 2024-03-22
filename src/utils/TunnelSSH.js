@@ -16,6 +16,7 @@ const connect = async (config) => {
         password: config.sshOptions.password,
         privateKey: config.sshOptions.privateKey,
         passphrase: config.sshOptions.passphrase,
+        keepaliveInterval: 1000
     }
     //
     // // Here is where the magic happens...
