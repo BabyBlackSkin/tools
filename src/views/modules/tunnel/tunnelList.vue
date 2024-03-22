@@ -49,7 +49,6 @@ export default {
   components: {DialogForm, QuicklyTable, QuicklySearchForm},
   data() {
     return {
-      demoDialog: false,
       form: {
         name:''
       },
@@ -156,6 +155,9 @@ export default {
           type: res.result ? 'success' : 'error',
           duration: 2000
         });
+        for (let c of this.tableData) {
+          c.status = 0
+        }
         row.status = res.result ? 1 : 2
       })
     },

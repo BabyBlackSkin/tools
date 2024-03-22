@@ -52,7 +52,7 @@ const routes = [
                     name: 'sshManager'
                 },
                 component: () => {
-                    return import("@/views/modules/ssh/sshList.vue")
+                    return import("@/views/modules/tunnel/tunnelList.vue")
                 },
             },
             {
@@ -62,7 +62,7 @@ const routes = [
                     name: 'sshManager'
                 },
                 component: () => {
-                    return import("@/views/modules/ssh/addSSH.vue")
+                    return import("@/views/modules/tunnel/addTuunel.vue")
                 }
             }
         ]

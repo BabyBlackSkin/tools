@@ -13,11 +13,13 @@ const connect = async (config) => {
         host: config.sshOptions.host,
         port: config.sshOptions.port,
         username: config.sshOptions.username,
-        password: config.sshOptions.password
+        password: config.sshOptions.password,
+        privateKey: config.sshOptions.privateKey,
+        passphrase: config.sshOptions.passphrase,
     }
     //
     // // Here is where the magic happens...
-    const serverOptions = {port: 3307}; // automatic assign port by OS
+    const serverOptions = {port: config.forwardOptions.srcPort}; // automatic assign port by OS
     //
     // // Note that the forwarding options does not define the srcAddr and srcPort here.
     // // to use the server configuration.
