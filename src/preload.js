@@ -25,6 +25,16 @@ contextBridge.exposeInMainWorld('ssh', {
 })
 
 // 自动更新相关API
+contextBridge.exposeInMainWorld('app', {
+    getVersion: () => {
+        return ipcRenderer.invoke('setting:getVersion')
+    },
+    checkForUpdate: () => {
+        return ipcRenderer.invoke('app:checkForUpdate')
+    },
+})
+
+// 自动更新相关API
 contextBridge.exposeInMainWorld('updater', {
     checkForUpdates: () => {
         return ipcRenderer.invoke('check-for-updates')
@@ -56,11 +66,3 @@ contextBridge.exposeInMainWorld('updater', {
         ipcRenderer.removeAllListeners(channel)
     }
 })
-
-// contextBridge.exposeInMainWorld('' +
-//     '', {
-//     getSelectedFilePath: () => {
-//         return ipcRenderer.invoke('dialog:file:getSelectedPath')
-//     },
-// })
-//

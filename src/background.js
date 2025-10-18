@@ -5,13 +5,20 @@ const { fork } = require('child_process');
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib'
 import { autoUpdater } from 'electron-updater'
 import sqlite3 from "@/utils/MySQLite";
-import tunnelSSH from "@/utils/ssh/tunnel";
 import SysOptResult from "@/utils/SysOptResult";
 
 import {SSH_EVENT} from "@/utils/ssh/constants";
+import updater from "@/updater";
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const path = require('path');
+
+Object.defineProperty(app, 'isPackaged', {
+    get() {
+        return true;
+    }
+});
+
 const isPackaged = app.isPackaged;
 
 // 配置自动更新
@@ -56,7 +63,8 @@ async function createWindow() {
     // 初始化sqlite，其实可以等到用到数据库tab再初始化的
     sqlite3.SQLiteInit()
 
-    updateHandle()
+    updater(mainWindow, ipcMain);
+    // updateHandle()
 }
 
 // Quit when all windows are closed.
@@ -104,7 +112,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // 监听应用退出事件，确保SSH连接被正确关闭
 app.on('before-quit', async () => {
     try {
-        await tunnelSSH.close();
+        await handleSSHClose();
     } catch (error) {
         console.error('Error closing SSH tunnel on app quit:', error);
     }
@@ -136,6 +144,11 @@ ipcMain.handle('getSqlLite', () => {
 ipcMain.handle('SQLite:execute', async (e, sql) => {
     // debugger
     return await sqlite3.execute(sql)
+})
+
+ipcMain.handle('setting:getVersion', (e, sql) => {
+    // debugger
+    return app.getVersion()
 })
 
 let ssh_worker = null;
@@ -214,7 +227,7 @@ async function handleSSHClose() {
             console.warn('SSH close timeout, kill');
             forceKillWorker();
             resolve({ result: true, msg: 'SSH connection closed' });
-        }, 5000);
+        }, 100);
 
         ssh_worker.once('exit', () => {
             clearTimeout(timeout);
