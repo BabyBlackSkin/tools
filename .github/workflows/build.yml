@@ -33,7 +33,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm i -g pnpm
-          pnpm install --frozen-lockfile # 安装项目依赖
+          pnpm install  # 安装项目依赖
 
       # 添加环境变量设置步骤（针对 Windows）
       - name: Setup Windows Environment
