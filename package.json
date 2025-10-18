@@ -16,9 +16,7 @@
     "build": "vue-cli-service build",
     "build:win": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build --win --publish never",
     "build:win:public": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build  --publish always",
-    "electron:serve": "vue-cli-service electron:serve",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps"
+    "electron:serve": "vue-cli-service electron:serve"
   },
   "main": "background.js",
   "dependencies": {

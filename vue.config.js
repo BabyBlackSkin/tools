@@ -32,18 +32,6 @@ module.exports = {
                 //     icon: "./public/favicon_big.ico",
                 //     // requestedExecutionLevel: "设置exe的运行权限"
                 // }
-                // 自动更新配置
-                publish: {
-                    provider: "github",
-                    owner: "BabyBlackSkin",
-                    repo: "tools"
-                },
-                // 生成更新文件
-                generateUpdatesFilesForAllChannels: true,
-                // 发布配置
-                releaseInfo: {
-                    releaseNotes: "新版本更新内容"
-                }
             },
         }
     }
