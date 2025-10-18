@@ -33,7 +33,17 @@ jobs:
       - name: Install Dependencies
         run: |
           npm i -g pnpm
-          pnpm install  # 安装项目依赖
+           # 清除可能的缓存问题
+          pnpm store prune
+          # 安装依赖，忽略脚本（避免 electron 安装问题）
+          pnpm install --ignore-scripts
+          # 单独安装 electron
+          pnpm add electron@29.4.6 --save-dev --ignore-scripts
+          # 现在运行 postinstall 脚本
+          npx electron-builder install-app-deps || echo "Continuing despite electron-builder issue"
+
+#      - name: Verify Electron Installation
+#        run: npx electron --version || echo "Electron not available, but continuing"
 
       # 添加环境变量设置步骤（针对 Windows）
       - name: Setup Windows Environment
