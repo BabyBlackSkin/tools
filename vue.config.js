@@ -1,6 +1,8 @@
 module.exports = {
     pluginOptions:{
         electronBuilder:{
+            // 👇 让 better-sqlite3 不被打包进 asar，而是以原生形式保留
+            externals: ['better-sqlite3'],
             preload:'src/preload.js',
             // 如果package.json 中main指定background.js后仍然报错找不到，则开启这个
             // chainWebpackMainProcess: config => {
@@ -19,6 +21,10 @@ module.exports = {
                     // allowElevation:false,// 允许请求提升。 如果为false，则用户必须使用提升的权限重新启动安装程序。
                     allowToChangeInstallationDirectory:true, // 允许修改安装目录
                 },
+                // 👇 避免 asar 打包后 .node 文件无法加载
+                asarUnpack: [
+                    'node_modules/better-sqlite3',
+                ],
                 // 桌面应用程序
                 productName: 'Tools',
                 // 不将extraResources中的文件打包进去

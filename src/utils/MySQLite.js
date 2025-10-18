@@ -1,11 +1,12 @@
 const os = require('os');
-const sqlite3 = require("sqlite3")
+const Database = require('better-sqlite3');
 const fileUtils = require('./FileUtils');
-let configPath = os.homedir() + '/.tools'
-let DB_PATH = configPath + '/tools.db'
+
+const configPath = os.homedir() + '/.tools';
+const DB_PATH = configPath + '/tools.db';
 
 const init_sql = `
-CREATE TABLE  if not exists "tunnel_ssh_config" (
+CREATE TABLE IF NOT EXISTS "tunnel_ssh_config" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL,
   "src_port" TEXT NOT NULL,
@@ -16,32 +17,47 @@ CREATE TABLE  if not exists "tunnel_ssh_config" (
   "ssh_user_name" TEXT NOT NULL,
   "ssh_password" TEXT NOT NULL
 );
-`
+`;
 
 let db = null;
+
 /**
- * @Description: 连接数据库
- * @CreationDate 2023-05-10 13:48:41
+ * 初始化数据库
  */
 const SQLiteInit = () => {
-    fileUtils.mkdir(configPath)
+    // 确保配置目录存在
+    fileUtils.mkdir(configPath);
 
-    db = new sqlite3.Database(DB_PATH, (err) => {
-        if (err) {
-            throw err
-        }
-    });
-    db.run(init_sql)
-}
+    console.log('DB_PATH:', DB_PATH)
+    // 打开数据库（如果不存在会自动创建）
+    db = new Database(DB_PATH,{ verbose: console.log })
 
+    // 初始化表结构
+    db.exec(init_sql);
+};
+
+/**
+ * 执行 SQL 语句（查询）
+ * @param {string} sql
+ * @returns {Promise<{result: boolean, msg: string, data?: any}>}
+ */
 const execute = (sql) => {
     return new Promise((resolve) => {
-        db.all(sql, (err, data) => {
-            if (err) {
-                resolve({result: false, msg: err, data: data});
+        try {
+            const stmt = db.prepare(sql);
+            let data;
+
+            // 判断是查询还是执行类语句
+            if (/^\s*select/i.test(sql)) {
+                data = stmt.all(); // 查询全部数据
+            } else {
+                data = stmt.run();
             }
-            resolve({result: true, msg: '操作成功', data: data});
-        });
+
+            resolve({ result: true, msg: '操作成功', data });
+        } catch (err) {
+            resolve({ result: false, msg: err.message, data: null });
+        }
     });
 };
 
