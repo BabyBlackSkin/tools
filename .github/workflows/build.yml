@@ -13,6 +13,11 @@ jobs:
     name: build and release electron app  # 任务名称
     runs-on: ${{ matrix.os }}  # 在matrix.os定义的操作系统上运行
 
+
+    env:
+      ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+      ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+
 #    if: startsWith(github.ref, 'refs/tags/')  # 只在推送标签时运行 on.push.tags 已经保证了在推送标签时运行
 
     strategy:
@@ -30,17 +35,30 @@ jobs:
         with:
           node-version: 18  # 安装Node.js 18 （这里node环境是能够运行代码的环境）
 
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Install Dependencies
         run: |
           npm i -g pnpm
-           # 清除可能的缓存问题
+          
+          # 清除可能的缓存问题
           pnpm store prune
+          
           # 安装依赖，忽略脚本（避免 electron 安装问题）
-          pnpm install --ignore-scripts
-          # 单独安装 electron
-          pnpm add electron@29.4.6 --save-dev --ignore-scripts
-          # 现在运行 postinstall 脚本
-          npx electron-builder install-app-deps || echo "Continuing despite electron-builder issue"
+          # 安装依赖（包括 Electron），不忽略脚本
+          pnpm install
+          
+          # 确保 Electron 依赖安装正确
+          pnpm exec electron --version
+          
+          # 重新编译原生模块（如 better-sqlite3）
+          pnpm exec electron-builder install-app-deps
 
 #      - name: Verify Electron Installation
 #        run: npx electron --version || echo "Electron not available, but continuing"
