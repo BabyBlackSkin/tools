@@ -9,16 +9,21 @@
       <el-menu :default-active="this.$route.meta.name" class="el-menu-vertical-demo">
         <Menu v-for="menu in footMenuList" :menu="menu"></Menu>
       </el-menu>
+      <!-- 更新检查器 -->
+      <div style="padding: 10px; border-top: 1px solid #f3f3f3;">
+        <UpdateChecker />
+      </div>
     </div>
   </el-container>
 </template>
 
 <script>
 import Menu from "@/views/Menu.vue";
+import UpdateChecker from "@/components/UpdateChecker.vue";
 
 export default {
   name: "SideBar",
-  components: {Menu},
+  components: {Menu, UpdateChecker},
   props: {
     menu: {
       type: Object,
@@ -31,11 +36,11 @@ export default {
     return {
       menuList: [
         {
-          name: 'HomeView',
+          name: 'HomeView', // 路由的name
           meta: {
             icon: 'el-icon-house',
-            title: 'Home',
-            name: 'HomeView'
+            title: 'Home', // 渲染的名称
+            name: 'HomeView', // 用于与router.name比较，是否激活nav
           },
         },
         {
@@ -46,6 +51,22 @@ export default {
             name: 'sshManager'
           },
         },
+        // {
+        //   name: 'Str',
+        //   meta:{
+        //     name:'Str',
+        //     title:'字符串解析',
+        //   },
+        //   children: [
+        //     {
+        //       name: 'ParsingMapToStringStr',
+        //       meta: {
+        //         title: 'ParsingMapToStringStr',
+        //         name: 'ParsingMapToStringStr'
+        //       }
+        //     }
+        //   ]
+        // }
         // {
         //   name: 'URLCoding',
         //   title: 'URL编码与解码',
@@ -75,7 +96,8 @@ export default {
       ]
     }
   },
-  methods: {},
+  methods: {}
+  ,
   computed: {}
 }
 </script>

@@ -43,6 +43,7 @@
 import QuicklySearchForm from "@/components/minpoint/form/quickly-search-form.vue";
 import QuicklyTable from "@/components/minpoint/table/qucikly-table.vue";
 import DialogForm from "@/components/minpoint/form/dialog-form.vue";
+import {SSH_EVENT} from "@/utils/ssh/constants";
 
 export default {
   name: "DataBaseSSH",
@@ -111,6 +112,8 @@ export default {
   mounted() {
     this.search()
   },
+  beforeDestroy() {
+  },
   methods: {
     search() {
       let sql = 'SELECT * FROM "main"."tunnel_ssh_config"'
@@ -145,30 +148,73 @@ export default {
         forwardOptions: {
           dstAddr: row.dst_host,
           dstPort: row.dst_port,
+          srcAddr: '127.0.0.1',
           srcPort: row.src_port
         }
       }
-      window.ssh.connect(config).then(res => {
-        this.$notify({
-          title: res.result ? '成功' : '警告',
-          message: res.msg,
-          type: res.result ? 'success' : 'error',
-          duration: 2000
-        });
-        for (let c of this.tableData) {
-          c.status = 0
+      window.ssh.operation({event:SSH_EVENT.CONNECT,config}).then(res => {
+        console.log('connect', res)
+        if (res.result) {
+          this.$notify({
+            title: '成功',
+            message: res.msg,
+            type: 'success',
+            duration: 2000
+          });
+          for (let c of this.tableData) {
+            c.status = 0
+          }
+          row.status = 1
+        } else {
+          // 检查是否是端口占用错误
+          if (res.msg && (res.msg.includes('EADDRINUSE') || res.msg.includes('address already in use'))) {
+            this.$alert(`端口 ${row.src_port} 已被占用`, '端口占用')
+            row.status = 2
+          } else {
+            this.$notify({
+              title: '连接失败',
+              message: res.msg,
+              type: 'error',
+              duration: 3000
+            });
+            row.status = 2
+          }
         }
-        row.status = res.result ? 1 : 2
+      }).catch(error => {
+        console.error('SSH连接错误:', error);
+        // 检查是否是端口占用错误
+        if (error.message && (error.message.includes('EADDRINUSE') || error.message.includes('address already in use'))) {
+          this.$alert(`端口 ${row.src_port} 已被占用`, '端口占用')
+          row.status = 2
+        } else {
+          this.$notify({
+            title: '连接失败',
+            message: 'SSH连接出现异常，请检查网络连接和配置',
+            type: 'error',
+            duration: 3000
+          });
+          row.status = 2
+        }
       })
     },
     closeConnection(row, index) {
-      window.ssh.close().then(res => {
+      window.ssh.operation({event:SSH_EVENT.CLOSE}).then(res => {
         this.$notify({
           title: res.result ? '已断开' : '断开失败',
           message: res.msg,
           type: res.result ? 'warning' : 'error',
           duration: 2000
         });
+        row.status = 0
+      }).catch(error => {
+        console.error('SSH断开错误:', error);
+        this.$notify({
+          title: '断开失败',
+          message: 'SSH断开连接时出现异常',
+          type: 'error',
+          duration: 3000
+        });
+        // 即使出错也设置为断开状态
         row.status = 0
       })
     },

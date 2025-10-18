@@ -19,10 +19,48 @@ contextBridge.exposeInMainWorld('sqlite', {
 
 
 contextBridge.exposeInMainWorld('ssh', {
-    connect: (config) => {
-        return ipcRenderer.invoke('SSH:connect', config)
-    },
-    close: () => {
-        return ipcRenderer.invoke('SSH:close')
+    operation: (data) => {
+        return ipcRenderer.invoke('ssh:operation', data)
     }
 })
+
+// 自动更新相关API
+contextBridge.exposeInMainWorld('updater', {
+    checkForUpdates: () => {
+        return ipcRenderer.invoke('check-for-updates')
+    },
+    downloadUpdate: () => {
+        return ipcRenderer.invoke('download-update')
+    },
+    installUpdate: () => {
+        return ipcRenderer.invoke('install-update')
+    },
+    // 监听更新事件
+    onUpdateAvailable: (callback) => {
+        ipcRenderer.on('update-available', callback)
+    },
+    onUpdateDownloaded: (callback) => {
+        ipcRenderer.on('update-downloaded', callback)
+    },
+    onUpdateNotAvailable: (callback) => {
+        ipcRenderer.on('update-not-available', callback)
+    },
+    onUpdateError: (callback) => {
+        ipcRenderer.on('update-error', callback)
+    },
+    onDownloadProgress: (callback) => {
+        ipcRenderer.on('download-progress', callback)
+    },
+    // 移除监听器
+    removeAllListeners: (channel) => {
+        ipcRenderer.removeAllListeners(channel)
+    }
+})
+
+// contextBridge.exposeInMainWorld('' +
+//     '', {
+//     getSelectedFilePath: () => {
+//         return ipcRenderer.invoke('dialog:file:getSelectedPath')
+//     },
+// })
+//

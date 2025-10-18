@@ -66,7 +66,17 @@ const routes = [
                 }
             }
         ]
-    }
+    },
+    {
+        path: '/str',
+        name: 'Str',
+        meta: {
+            name: 'ParsingMapToStringStr'
+        },
+        component: () => {
+            return import("@/views/modules/stringAnalysis/ParsingMapToStringStr.vue")
+        },
+    },
 ]
 
 const router = new VueRouter({

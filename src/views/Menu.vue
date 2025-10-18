@@ -52,6 +52,11 @@ export default {
 </script>
 
 <style scoped>
+::v-deep.el-menu.el-submenu__title{
+  height: 32px;
+  line-height: 32px;
+}
+
 ::v-deep.el-menu-item {
   height: 32px;
   line-height: 32px;
