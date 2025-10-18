@@ -14,8 +14,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "electron:build:win": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build  --publish never",
-    "electron:build:win:public": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build  --publish always",
+    "build:win": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build --win --publish never",
+    "build:win:public": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service electron:build  --publish always",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
@@ -38,6 +38,7 @@
     "@vue/cli-plugin-vuex": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
     "electron": "^29.0.0",
+    "electron-builder": "^24.0.0",
     "electron-devtools-installer": "^3.1.0",
     "sass": "^1.32.7",
     "sass-loader": "^12.0.0",
