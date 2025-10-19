@@ -43,12 +43,26 @@ jobs:
             ${{ runner.os }}-pnpm-
 
       # ✅ 安装依赖 + Electron 二进制
-      - name: Install Dependencies
+      - name: Install Dependencies (Force Fix Electron)
         run: |
           npm i -g pnpm
           pnpm store prune
+            
+          # 1️⃣ 安装依赖
           pnpm install
-          pnpm exec electron --version
+            
+          # 2️⃣ 强制重新安装 Electron
+          echo "Force reinstall Electron..."
+          rd /s /q node_modules\\electron || true
+          pnpm add electron@29.4.6 --save-dev --force
+            
+          # 3️⃣ 直接触发 Electron 二进制下载（防止卡 postinstall）
+          px electron-download --version=29.4.6 --mirror=https://npmmirror.com/mirrors/electron/
+            
+          # 4️⃣ 验证安装结果
+          pnpm exec electron --version || (echo "Electron failed to install" && exit 1)
+            
+          # 5️⃣ 重新编译所有 native 模块（如 better-sqlite3）
           pnpm exec electron-builder install-app-deps
 
       # ✅ 重新编译原生模块（如 better-sqlite3）
