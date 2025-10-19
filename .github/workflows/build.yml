@@ -1,103 +1,86 @@
-name: AutoBuild  # 工作流的名称
+name: AutoBuild
 
 permissions:
-  contents: write  # 给予写入仓库内容的权限
+  contents: write  # 允许创建 release、上传产物等
 
 on:
   push:
     tags:
-      - v*  # 当推送以v开头的标签时触发此工作流
+      - v*  # 当推送以 v 开头的标签时触发，例如 v0.1.0
 
 jobs:
   release:
-    name: build and release electron app  # 任务名称
-    runs-on: ${{ matrix.os }}  # 在matrix.os定义的操作系统上运行
-
-
+    name: Build and Release Electron App
+    runs-on: ${{ matrix.os }}
     env:
+      # Electron 官方镜像源（加速下载）
       ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
       ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-#    if: startsWith(github.ref, 'refs/tags/')  # 只在推送标签时运行 on.push.tags 已经保证了在推送标签时运行
-
     strategy:
-      fail-fast: false  # 如果一个任务失败,其他任务继续运行
+      fail-fast: false
       matrix:
-#        os: [windows-latest, macos-latest]  # 在Windows和macOS上运行任务
-        os: [windows-latest]  # 在Windows和macOS上运行任务
+        os: [windows-latest]  # 你可以在这里加 macos-latest, ubuntu-latest
 
     steps:
-      - name: Check out git repository
-        uses: actions/checkout@v4  # 检出代码仓库
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18  # 安装Node.js 18 （这里node环境是能够运行代码的环境）
+          node-version: 18
 
-#      - name: Cache pnpm dependencies
-#        uses: actions/cache@v4
-#        with:
-#          path: |
-#            ~/.pnpm-store
-#            node_modules
-#            key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      # ✅ 缓存 pnpm 依赖（容错且稳定）
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') || github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
+      # ✅ 安装依赖 + Electron 二进制
       - name: Install Dependencies
         run: |
           npm i -g pnpm
-          
-          # 清除可能的缓存问题
           pnpm store prune
-          
-          # 安装依赖，忽略脚本（避免 electron 安装问题）
-          # 安装依赖（包括 Electron），不忽略脚本
           pnpm install
-          
-          # 确保 Electron 依赖安装正确
           pnpm exec electron --version
-          
-          # 重新编译原生模块（如 better-sqlite3）
           pnpm exec electron-builder install-app-deps
 
-#      - name: Verify Electron Installation
-#        run: npx electron --version || echo "Electron not available, but continuing"
-
-      # 添加环境变量设置步骤（针对 Windows）
-      - name: Setup Windows Environment
-        if: matrix.os == 'windows-latest'  # 只在Windows上运行
+      # ✅ 重新编译原生模块（如 better-sqlite3）
+      - name: Rebuild native modules
         run: |
-          echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV # 构建Windows版应用
+          pnpm add -D electron-rebuild
+          pnpm exec electron-rebuild
 
+      # ✅ 设置 Windows 环境（兼容 OpenSSL）
+      - name: Setup Windows Environment
+        if: matrix.os == 'windows-latest'
+        run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+
+      # ✅ 构建 Electron 应用
       - name: Build Electron App for Windows
-        if: matrix.os == 'windows-latest'  # 只在macOS上运行
+        if: matrix.os == 'windows-latest'
         run: pnpm run build:win
 
-#      - name: Build Electron App for macOS
-#        if: matrix.os == 'macos-latest'
-#        run: |
-#          pnpm run build:mac
-#          pnpm run build:mac-arm
+      # ✅ 清理除产物以外的多余文件
+      - name: Cleanup Artifacts
+        run: npx del-cli "dist_electron/*" "!dist_electron/*.exe" "!dist_electron/*.zip" "!dist_electron/*.yml" "!dist_electron/*.blockmap"
 
-      - name: Cleanup Artifacts for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          npx del-cli "dist_electron/*" "!dist_electron/*.exe" "!dist_electron/*.zip" "!dist_electron/*.yml" "!dist_electron/*.blockmap"
-
-#      - name: Cleanup Artifacts for MacOS
-#        if: matrix.os == 'macos-latest'
-#        run: |
-#          npx del-cli "dist_electron/*" "!dist_electron/*.dmg" "!dist_electron/*.zip" "!dist_electron/*.yml" "!dist_electron/*.blockmap"
-
-      - name: Upload artifacts
+      # ✅ 上传构建产物
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: dist_electron/  # vue-cli-plugin-electron-builder 默认输出到 dist_electron
+          path: dist_electron/
 
+      # ✅ 创建 GitHub Release（自动附加构建文件）
       - name: Create Release
         uses: softprops/action-gh-release@v1
-#        if: startsWith(github.ref, 'refs/tags/')  # 只在推送标签时创建release
         with:
           files: 'dist_electron/**'
           draft: false
