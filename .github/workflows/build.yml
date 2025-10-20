@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]  # 你可以在这里加 macos-latest, ubuntu-latest
+        os: [windows-latest]
 
     steps:
       - name: Checkout Repository
@@ -31,58 +31,62 @@ jobs:
         with:
           node-version: 18
 
-      # ✅ 缓存 pnpm 依赖（保持不变）
+      # ✅ 缓存 pnpm 依赖（排除 electron）
       - name: Cache pnpm dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.pnpm-store
             node_modules
+            !node_modules/electron
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') || github.run_id }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # ✅ 安装依赖 (简化版)
-      # 环境变量中的 ELECTRON_MIRROR 会在这里自动生效
+      # ✅ 安装依赖
       - name: Install Dependencies
         run: |
           npm i -g pnpm
           pnpm store prune
-          
-          # pnpm install 会自动下载 electron 二进制文件
-          # 并使用 env 中定义的镜像
+          echo "Using ELECTRON_MIRROR=$ELECTRON_MIRROR"
           pnpm install --frozen-lockfile
-
-          # 验证 Electron 是否安装成功
           echo "Verifying Electron installation..."
-          npx electron --version
+          pnpm exec electron --version || echo "Electron not yet ready."
 
-          # 重新编译 electron-builder 需要的原生依赖
-          # 这一步也会使用 ELECTRON_BUILDER_BINARIES_MIRROR
-          pnpm exec electron-builder install-app-deps
+      # ⚙️ 强制修复 Electron 安装
+      - name: Fix Electron Installation
+        run: |
+          echo "Force reinstalling Electron..."
+          rd /s /q node_modules\\electron 2>nul || true
+          pnpm install electron@latest --ignore-scripts
+          pnpm exec electron --version
 
-      # 设置 Windows 环境（兼容 OpenSSL）
+      # 🧩 重新编译原生依赖
+      - name: Rebuild Native Modules
+        run: pnpm exec electron-builder install-app-deps
+
+      # 🪟 Windows 环境设置
       - name: Setup Windows Environment
         if: matrix.os == 'windows-latest'
-        run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+        run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $env:GITHUB_ENV
 
-      # 构建 Electron 应用
+      # 🧱 构建 Electron 应用
       - name: Build Electron App for Windows
         if: matrix.os == 'windows-latest'
         run: pnpm run build:win
 
-      # 清理除产物以外的多余文件
+      # 🧹 清理除产物以外的多余文件
       - name: Cleanup Artifacts
         run: npx del-cli "dist_electron/*" "!dist_electron/*.exe" "!dist_electron/*.zip" "!dist_electron/*.yml" "!dist_electron/*.blockmap"
 
-      # 上传构建产物
+      # 📦 上传构建产物
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: dist_electron/
 
-      # 创建 GitHub Release（自动附加构建文件）
+      # 🚀 创建 GitHub Release（自动附加构建文件）
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
