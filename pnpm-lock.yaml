@@ -14,9 +14,6 @@ importers:
       better-sqlite3:
         specifier: ^12.4.1
         version: 12.4.1
-      electron-devtools-installer:
-        specifier: ^3.1.0
-        version: 3.2.1
       electron-updater:
         specifier: ^6.6.2
         version: 6.6.2
@@ -60,6 +57,9 @@ importers:
       electron-builder:
         specifier: ^24.0.0
         version: 24.13.3(electron-builder-squirrel-windows@24.13.3)
+      electron-devtools-installer:
+        specifier: ^3.1.0
+        version: 3.2.1
       sass:
         specifier: ^1.32.7
         version: 1.93.2

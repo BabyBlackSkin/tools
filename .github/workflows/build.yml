@@ -61,12 +61,6 @@ jobs:
           # 这一步也会使用 ELECTRON_BUILDER_BINARIES_MIRROR
           pnpm exec electron-builder install-app-deps
 
-      # 重新编译原生模块（如 better-sqlite3） (保持不变)
-      - name: Rebuild native modules
-        run: |
-          pnpm add -D electron-rebuild
-          pnpm exec electron-rebuild
-
       # 设置 Windows 环境（兼容 OpenSSL）
       - name: Setup Windows Environment
         if: matrix.os == 'windows-latest'
