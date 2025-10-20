@@ -48,52 +48,76 @@ jobs:
           npm i -g pnpm
           pnpm store prune
             
-          # 1️⃣ 安装依赖
+          # 安装依赖
           pnpm install
             
-          # 2️⃣ 强制重新安装 Electron
-          echo "Force reinstall Electron..."
+          # 强制重新安装 Electron
+          echo "Cleaning and reinstalling Electron..."
           # rd /s /q node_modules\\electron || true
           Remove-Item -Recurse -Force node_modules\electron -ErrorAction SilentlyContinue
-          pnpm add electron@29.4.6 --save-dev --force
+          Remove-Item -Recurse -Force node_modules/.pnpm/electron* -ErrorAction SilentlyContinue
+          
+          pnpm add electron@29.0.0 --save-dev --force
             
-          # 3️⃣ 直接触发 Electron 二进制下载（防止卡 postinstall）
-          npx electron-download --version=29.4.6 --mirror=https://npmmirror.com/mirrors/electron/
+          # 直接触发 Electron 二进制下载（防止卡 postinstall）
+          # npx electron-download --version=29.0.0 --mirror=https://npmmirror.com/mirrors/electron/
+          npx electron-download --version=29.0.0 --platform=win32 --arch=x64 --mirror=https://npmmirror.com/mirrors/electron/
             
-          # 4️⃣ 验证安装结果
-          pnpm exec electron --version || (echo "Electron failed to install" && exit 1)
+          #  验证 Electron 安装
+          $electronPath = "node_modules/electron"
+          if (Test-Path $electronPath) {
+            echo "Electron directory exists"
+            Get-ChildItem $electronPath
+          } else {
+            echo "Electron directory missing - creating manually"
+            mkdir $electronPath
+          }
+          
+          # 手动复制 Electron 二进制文件
+          $cachePath = "$env:LOCALAPPDATA/electron/Cache/electron-v29.4.6-win32-x64.zip"
+          if (Test-Path $cachePath) {
+            echo "Found cached Electron zip, extracting..."
+            Expand-Archive -Path $cachePath -DestinationPath $electronPath -Force
+          }
+          
+           # 最终验证
+          npx electron --version
+          if ($LASTEXITCODE -ne 0) {
+            echo "Electron verification failed"
+            exit 1
+          }
             
-          # 5️⃣ 重新编译所有 native 模块（如 better-sqlite3）
+          # 重新编译所有 native 模块（如 better-sqlite3）
           pnpm exec electron-builder install-app-deps
 
-      # ✅ 重新编译原生模块（如 better-sqlite3）
+      # 重新编译原生模块（如 better-sqlite3）
       - name: Rebuild native modules
         run: |
           pnpm add -D electron-rebuild
           pnpm exec electron-rebuild
 
-      # ✅ 设置 Windows 环境（兼容 OpenSSL）
+      # 设置 Windows 环境（兼容 OpenSSL）
       - name: Setup Windows Environment
         if: matrix.os == 'windows-latest'
         run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
 
-      # ✅ 构建 Electron 应用
+      # 构建 Electron 应用
       - name: Build Electron App for Windows
         if: matrix.os == 'windows-latest'
         run: pnpm run build:win
 
-      # ✅ 清理除产物以外的多余文件
+      # 清理除产物以外的多余文件
       - name: Cleanup Artifacts
         run: npx del-cli "dist_electron/*" "!dist_electron/*.exe" "!dist_electron/*.zip" "!dist_electron/*.yml" "!dist_electron/*.blockmap"
 
-      # ✅ 上传构建产物
+      # 上传构建产物
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
           path: dist_electron/
 
-      # ✅ 创建 GitHub Release（自动附加构建文件）
+      # 创建 GitHub Release（自动附加构建文件）
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
