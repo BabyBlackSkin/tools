@@ -53,11 +53,12 @@ jobs:
             
           # 2️⃣ 强制重新安装 Electron
           echo "Force reinstall Electron..."
-          rd /s /q node_modules\\electron || true
+          # rd /s /q node_modules\\electron || true
+          Remove-Item -Recurse -Force node_modules\electron -ErrorAction SilentlyContinue
           pnpm add electron@29.4.6 --save-dev --force
             
           # 3️⃣ 直接触发 Electron 二进制下载（防止卡 postinstall）
-          px electron-download --version=29.4.6 --mirror=https://npmmirror.com/mirrors/electron/
+          npx electron-download --version=29.4.6 --mirror=https://npmmirror.com/mirrors/electron/
             
           # 4️⃣ 验证安装结果
           pnpm exec electron --version || (echo "Electron failed to install" && exit 1)
