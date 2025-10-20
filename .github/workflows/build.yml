@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 18
 
-      # ✅ 缓存 pnpm 依赖（容错且稳定）
+      # ✅ 缓存 pnpm 依赖（保持不变）
       - name: Cache pnpm dependencies
         uses: actions/cache@v4
         with:
@@ -42,58 +42,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # ✅ 安装依赖 + Electron 二进制
-      - name: Install Dependencies (Force Fix Electron)
-        shell: pwsh
+      # ✅ 安装依赖 (简化版)
+      # 环境变量中的 ELECTRON_MIRROR 会在这里自动生效
+      - name: Install Dependencies
         run: |
           npm i -g pnpm
           pnpm store prune
-            
-          # 安装依赖
-          pnpm install
+          
+          # pnpm install 会自动下载 electron 二进制文件
+          # 并使用 env 中定义的镜像
+          pnpm install --frozen-lockfile
 
-          echo "Force reinstalling Electron..."
-          Remove-Item -Recurse -Force node_modules\electron -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force node_modules\.pnpm\electron* -ErrorAction SilentlyContinue
-
-          pnpm add electron@29.0.0 --save-dev --force
-
-          # 手动下载 Electron 二进制
-          $ELECTRON_VERSION = "29.0.0"
-          $ZIP_PATH = "electron-v$ELECTRON_VERSION-win32-x64.zip"
-          $CACHE_DIR = "$env:USERPROFILE\AppData\Local\electron\Cache"
-          $DIST_DIR = "node_modules/electron/dist"
-
-          echo "Downloading electron binary..."
-          npx electron-download --version=$ELECTRON_VERSION --platform=win32 --arch=x64 --mirror=https://npmmirror.com/mirrors/electron/
-
-          # 确保 dist 目录存在并解压二进制包
-          if (!(Test-Path $DIST_DIR)) {
-            New-Item -ItemType Directory -Path $DIST_DIR | Out-Null
-          }
-
-          $ZIP_SOURCE = Join-Path $CACHE_DIR $ZIP_PATH
-          if (Test-Path $ZIP_SOURCE) {
-            echo "Extracting electron zip to dist..."
-            Expand-Archive -Path $ZIP_SOURCE -DestinationPath $DIST_DIR -Force
-          } else {
-            echo "ERROR: Electron zip not found in cache path $ZIP_SOURCE"
-            exit 1
-          }
-
-          # 验证 Electron 可执行文件存在
-          if (!(Test-Path "$DIST_DIR/electron.exe")) {
-            echo "ERROR: electron.exe missing after extraction!"
-            exit 1
-          }
-
-          # 验证版本
+          # 验证 Electron 是否安装成功
+          echo "Verifying Electron installation..."
           npx electron --version
 
-          # 重新编译原生依赖
+          # 重新编译 electron-builder 需要的原生依赖
+          # 这一步也会使用 ELECTRON_BUILDER_BINARIES_MIRROR
           pnpm exec electron-builder install-app-deps
 
-      # 重新编译原生模块（如 better-sqlite3）
+      # 重新编译原生模块（如 better-sqlite3） (保持不变)
       - name: Rebuild native modules
         run: |
           pnpm add -D electron-rebuild
